@@ -1,0 +1,20 @@
+{
+  "name": "campusflow",
+  "version": "1.0.0",
+  "description": "CampusFlow — AI-Powered Smart College Management Platform",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
+    "dev:server": "cd server && npm run dev",
+    "dev:client": "cd client && npm run dev",
+    "build": "cd client && npm run build",
+    "start": "cd server && npm start",
+    "seed": "cd server && npm run seed",
+    "seed:reset": "cd server && npm run seed:reset",
+    "test": "cd server && npm test",
+    "install:all": "npm install && cd server && npm install && cd ../client && npm install"
+  },
+  "devDependencies": {
+    "concurrently": "^9.0.0"
+  }
+}
