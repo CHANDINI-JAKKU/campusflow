@@ -10,7 +10,7 @@ import { logActivity } from '../utils/auditLog.js';
 
 // GET /api/grades/student/:studentId — all grades for a student
 export const getStudentGrades = asyncHandler(async (req, res) => {
-  const studentId = req.params.studentId === 'me' ? req.user._id : req.params.studentId;
+  const studentId = (!req.params.studentId || req.params.studentId === 'me') ? req.user._id : req.params.studentId;
   if (req.user.role === 'STUDENT' && studentId.toString() !== req.user._id.toString()) {
     throw new ApiError(403, 'Access denied');
   }
@@ -84,7 +84,7 @@ export const finalizeSemester = asyncHandler(async (req, res) => {
 
 // GET /api/grades/academic-record/:studentId
 export const getAcademicRecord = asyncHandler(async (req, res) => {
-  const studentId = req.params.studentId === 'me' ? req.user._id : req.params.studentId;
+  const studentId = (!req.params.studentId || req.params.studentId === 'me') ? req.user._id : req.params.studentId;
   const records = await AcademicRecord.find({ student: studentId })
     .populate({ path: 'subjects', populate: { path: 'subject', select: 'name code credits' } })
     .sort({ semester: 1 });

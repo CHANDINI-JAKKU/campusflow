@@ -105,7 +105,7 @@ export const getSessionRecords = asyncHandler(async (req, res) => {
 
 // GET /api/attendance/student/:studentId — student's attendance stats per subject
 export const getStudentAttendance = asyncHandler(async (req, res) => {
-  const studentId = req.params.studentId === 'me' ? req.user._id : req.params.studentId;
+  const studentId = (!req.params.studentId || req.params.studentId === 'me') ? req.user._id : req.params.studentId;
 
   // Authorization check
   if (req.user.role === 'STUDENT' && studentId.toString() !== req.user._id.toString()) {
@@ -117,7 +117,7 @@ export const getStudentAttendance = asyncHandler(async (req, res) => {
   const Enrollment = (await import('../models/Enrollment.js')).default;
 
   const enrollments = await Enrollment.find({ student: studentId, isActive: true }).populate('course');
-  const courseIds = enrollments.map((e) => e.course._id);
+  const courseIds = enrollments.map((e) => e.course?._id).filter(Boolean);
   const subjects = await Subject.find({ course: { $in: courseIds }, institution: req.user.institution });
 
   const stats = await Promise.all(

@@ -26,7 +26,7 @@ export default function StudentDashboard() {
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
-      const [profRes, attRes, assignRes, gradesRes, scheduleRes] = await Promise.all([
+      const [profRes, attRes, assignRes, gradesRes, scheduleRes] = await Promise.allSettled([
         api.get('/users/me/profile'),
         api.get('/attendance/student/me'),
         api.get('/assignments?limit=5'),
@@ -34,11 +34,11 @@ export default function StudentDashboard() {
         api.get('/academic/timetable/today')
       ]);
 
-      setProfileData(profRes.data);
-      setAttendanceData(attRes.data);
-      setAssignments(assignRes.data.assignments || []);
-      setGradesData(gradesRes.data);
-      setTodaySchedule(scheduleRes.data.timetable || []);
+      if (profRes.status === 'fulfilled') setProfileData(profRes.value.data);
+      if (attRes.status === 'fulfilled') setAttendanceData(attRes.value.data);
+      if (assignRes.status === 'fulfilled') setAssignments(assignRes.value.data?.assignments || []);
+      if (gradesRes.status === 'fulfilled') setGradesData(gradesRes.value.data);
+      if (scheduleRes.status === 'fulfilled') setTodaySchedule(scheduleRes.value.data?.timetable || []);
     } catch (err) {
       console.error(err);
       toast.error('Failed to load dashboard statistics');

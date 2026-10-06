@@ -23,8 +23,9 @@ export const calcSGPA = (grades) => {
   let weightedPoints = 0;
   for (const g of grades) {
     const credits = g.subject?.credits || 3;
+    const gp = g.gradePoints ?? 0;
     totalCredits += credits;
-    weightedPoints += g.gradePoints * credits;
+    weightedPoints += gp * credits;
   }
   return totalCredits > 0 ? parseFloat((weightedPoints / totalCredits).toFixed(2)) : 0;
 };
@@ -37,8 +38,9 @@ export const calcCGPA = async (studentId) => {
   let weightedPoints = 0;
   for (const g of grades) {
     const credits = g.subject?.credits || 3;
+    const gp = g.gradePoints ?? 0;
     totalCredits += credits;
-    weightedPoints += g.gradePoints * credits;
+    weightedPoints += gp * credits;
   }
   return totalCredits > 0 ? parseFloat((weightedPoints / totalCredits).toFixed(2)) : 0;
 };

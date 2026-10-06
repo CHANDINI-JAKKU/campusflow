@@ -49,7 +49,7 @@ export const getUserById = asyncHandler(async (req, res) => {
 
 // GET /api/users/:id/profile — extended profile with CGPA, attendance
 export const getStudentProfile = asyncHandler(async (req, res) => {
-  const studentId = req.params.id === 'me' ? req.user._id : req.params.id;
+  const studentId = (!req.params.id || req.params.id === 'me') ? req.user._id : req.params.id;
   if (req.user.role === 'STUDENT' && studentId.toString() !== req.user._id.toString()) {
     throw new ApiError(403, 'Access denied');
   }
