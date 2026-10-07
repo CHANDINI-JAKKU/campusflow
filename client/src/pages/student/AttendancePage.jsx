@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import api from '../../services/api';
-import { CheckSquare, AlertTriangle, CheckCircle2, Calendar, FileText } from 'lucide-react';
+import { CheckSquare, AlertTriangle, CheckCircle2, Calendar, FileText, Clock } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export default function StudentAttendancePage() {
@@ -37,8 +37,9 @@ export default function StudentAttendancePage() {
     );
   }
 
-  const overall = attendanceData?.overall || 0;
-  const isOverallAtRisk = overall < 75;
+  const overall = attendanceData?.overall;
+  const hasRecords = attendanceData?.hasRecords;
+  const isOverallAtRisk = hasRecords && overall !== null && overall < 75;
 
   return (
     <div className="space-y-6">
@@ -46,21 +47,29 @@ export default function StudentAttendancePage() {
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Attendance Tracking</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-            Real-time subject-wise tracking with automated 75% early warning threshold calculation.
+            Real-time subject-wise tracking calculated dynamically from actual lecture & lab attendance records.
           </p>
         </div>
 
         {/* Overall Percentage Badge */}
         <div className={`px-4 py-2 rounded-2xl border flex items-center space-x-3 ${
-          isOverallAtRisk 
+          !hasRecords
+            ? 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300'
+            : isOverallAtRisk 
             ? 'bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800 text-amber-900 dark:text-amber-200' 
             : 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800 text-emerald-900 dark:text-emerald-200'
         }`}>
           <div>
             <p className="text-[10px] uppercase font-bold tracking-wider opacity-75">Overall Attendance</p>
-            <p className="text-xl font-black">{overall}%</p>
+            <p className="text-xl font-black">{hasRecords && overall !== null ? `${overall}%` : 'No records yet'}</p>
           </div>
-          {isOverallAtRisk ? <AlertTriangle className="w-6 h-6 text-amber-600" /> : <CheckCircle2 className="w-6 h-6 text-emerald-600" />}
+          {!hasRecords ? (
+            <Clock className="w-6 h-6 text-gray-400" />
+          ) : isOverallAtRisk ? (
+            <AlertTriangle className="w-6 h-6 text-amber-600" />
+          ) : (
+            <CheckCircle2 className="w-6 h-6 text-emerald-600" />
+          )}
         </div>
       </div>
 
@@ -68,11 +77,15 @@ export default function StudentAttendancePage() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {attendanceData?.subjects?.map((sub) => {
           const isAtRisk = sub.isAtRisk;
+          const hasSubRecords = sub.hasRecords;
+
           return (
             <div
               key={sub.subject?._id}
               className={`p-6 rounded-2xl border bg-white dark:bg-gray-800 shadow-sm transition-all duration-200 ${
-                isAtRisk 
+                !hasSubRecords
+                  ? 'border-gray-100 dark:border-gray-700/80'
+                  : isAtRisk 
                   ? 'border-amber-300 dark:border-amber-700/80 ring-1 ring-amber-300 dark:ring-amber-700/40' 
                   : 'border-gray-100 dark:border-gray-700/80'
               }`}
@@ -87,11 +100,17 @@ export default function StudentAttendancePage() {
                   </h3>
                 </div>
                 <div className="text-right">
-                  <span className={`text-2xl font-black ${isAtRisk ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-600 dark:text-emerald-400'}`}>
-                    {sub.percentage}%
+                  <span className={`text-2xl font-black ${
+                    !hasSubRecords 
+                      ? 'text-gray-400 text-lg' 
+                      : isAtRisk 
+                      ? 'text-amber-600 dark:text-amber-400' 
+                      : 'text-emerald-600 dark:text-emerald-400'
+                  }`}>
+                    {hasSubRecords && sub.percentage !== null ? `${sub.percentage}%` : 'No records yet'}
                   </span>
                   <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 font-medium">
-                    {sub.attended} / {sub.totalClasses} classes
+                    {hasSubRecords ? `${sub.attended} / ${sub.totalClasses} classes` : '0 classes recorded'}
                   </p>
                 </div>
               </div>
@@ -99,8 +118,10 @@ export default function StudentAttendancePage() {
               {/* Progress Bar */}
               <div className="mt-4 w-full bg-gray-100 dark:bg-gray-700 h-3 rounded-full overflow-hidden">
                 <div
-                  className={`h-full rounded-full transition-all duration-500 ${isAtRisk ? 'bg-amber-500' : 'bg-emerald-500'}`}
-                  style={{ width: `${Math.min(sub.percentage, 100)}%` }}
+                  className={`h-full rounded-full transition-all duration-500 ${
+                    !hasSubRecords ? 'bg-gray-300 dark:bg-gray-600' : isAtRisk ? 'bg-amber-500' : 'bg-emerald-500'
+                  }`}
+                  style={{ width: `${hasSubRecords ? Math.min(sub.percentage, 100) : 0}%` }}
                 ></div>
               </div>
 
@@ -111,15 +132,19 @@ export default function StudentAttendancePage() {
                   <span className="text-gray-500 dark:text-gray-400">75% Institutional Threshold</span>
                 </div>
 
-                {isAtRisk ? (
+                {!hasSubRecords ? (
+                  <span className="text-gray-500 dark:text-gray-400 font-medium">
+                    Classes pending to begin
+                  </span>
+                ) : isAtRisk ? (
                   <span className="text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/60 px-2.5 py-1 rounded-lg font-bold flex items-center">
                     <AlertTriangle className="w-3.5 h-3.5 mr-1" />
-                    Need {sub.classesNeeded} more consecutive classes
+                    ⚠ Attendance below 75% — Need {sub.classesNeeded} more consecutive classes
                   </span>
                 ) : (
                   <span className="text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 px-2.5 py-1 rounded-lg font-bold flex items-center">
                     <CheckCircle2 className="w-3.5 h-3.5 mr-1" />
-                    Attendance Safe
+                    ✓ Attendance requirement satisfied
                   </span>
                 )}
               </div>

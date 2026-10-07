@@ -18,6 +18,8 @@ import FacultyAssignmentsPage from '../pages/faculty/AssignmentsPage';
 
 // College Admin Pages
 import AdminDashboard from '../pages/admin/AdminDashboard';
+import StudentsManagementPage from '../pages/admin/StudentsManagementPage';
+import EnrollmentManagementPage from '../pages/admin/EnrollmentManagementPage';
 
 // Placement Officer Pages
 import PlacementDashboard from '../pages/placement/PlacementDashboard';
@@ -61,9 +63,11 @@ const router = createBrowserRouter([
           // COLLEGE ADMIN ROUTES
           {
             path: 'admin',
-            element: <RoleRoute allowedRoles={['COLLEGE_ADMIN']} />,
+            element: <RoleRoute allowedRoles={['COLLEGE_ADMIN', 'SUPER_ADMIN']} />,
             children: [
               { path: 'dashboard', element: <AdminDashboard /> },
+              { path: 'students', element: <StudentsManagementPage /> },
+              { path: 'enrollment', element: <EnrollmentManagementPage /> },
             ]
           },
           // PLACEMENT OFFICER ROUTES

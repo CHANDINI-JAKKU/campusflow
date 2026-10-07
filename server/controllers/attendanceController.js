@@ -112,26 +112,39 @@ export const getStudentAttendance = asyncHandler(async (req, res) => {
     throw new ApiError(403, 'Access denied');
   }
 
+  const student = await User.findById(studentId);
+  if (!student) throw new ApiError(404, 'Student not found');
+
   // Get all subjects for this student
   const Subject = (await import('../models/Subject.js')).default;
   const Enrollment = (await import('../models/Enrollment.js')).default;
 
   const enrollments = await Enrollment.find({ student: studentId, isActive: true }).populate('course');
   const courseIds = enrollments.map((e) => e.course?._id).filter(Boolean);
-  const subjects = await Subject.find({ course: { $in: courseIds }, institution: req.user.institution });
+  
+  let subjects = [];
+  if (courseIds.length > 0) {
+    subjects = await Subject.find({ course: { $in: courseIds }, institution: req.user.institution });
+  }
+  if (subjects.length === 0 && student.department) {
+    subjects = await Subject.find({ department: student.department, institution: req.user.institution });
+  }
 
   const stats = await Promise.all(
     subjects.map(async (sub) => {
       const s = await calcAttendanceStats(studentId, sub._id);
-      return { subject: { _id: sub._id, name: sub.name, code: sub.code }, ...s };
+      return { subject: { _id: sub._id, name: sub.name, code: sub.code, credits: sub.credits }, ...s };
     })
   );
 
-  const overall = stats.length
-    ? Math.round(stats.reduce((acc, s) => acc + s.percentage, 0) / stats.length)
-    : 0;
+  const overallObj = await calcOverallAttendance(studentId);
 
-  res.json(new ApiResponse(200, { subjects: stats, overall }));
+  res.json(new ApiResponse(200, {
+    subjects: stats,
+    overall: overallObj.percentage,
+    overallStats: overallObj,
+    hasRecords: overallObj.hasRecords
+  }));
 });
 
 // GET /api/attendance/students/:subjectId — for faculty, enrollment + attendance summary

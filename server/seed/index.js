@@ -6,9 +6,10 @@ import Institution from '../models/Institution.js';
 import Department from '../models/Department.js';
 import Course from '../models/Course.js';
 import Subject from '../models/Subject.js';
-import Enrollment from '../models/Enrollment.js';
-import Attendance from '../models/Attendance.js';
+import Timetable from '../models/Timetable.js';
+import ClassSession from '../models/ClassSession.js';
 import AttendanceRecord from '../models/AttendanceRecord.js';
+import Enrollment from '../models/Enrollment.js';
 import Assignment from '../models/Assignment.js';
 import AssignmentSubmission from '../models/AssignmentSubmission.js';
 import Grade from '../models/Grade.js';
@@ -16,10 +17,6 @@ import AcademicRecord from '../models/AcademicRecord.js';
 import Company from '../models/Company.js';
 import JobDrive from '../models/JobDrive.js';
 import JobApplication from '../models/JobApplication.js';
-import PlacementOutcome from '../models/PlacementOutcome.js';
-import Event from '../models/Event.js';
-import Announcement from '../models/Announcement.js';
-import StudentRequest from '../models/StudentRequest.js';
 import Notification from '../models/Notification.js';
 import dotenv from 'dotenv';
 
@@ -28,12 +25,8 @@ dotenv.config();
 const runSeeder = async () => {
   try {
     await connectDB();
-    const isReset = process.argv.includes('--reset') || true;
-
-    if (isReset) {
-      console.log('🧹 Clearing existing database collections...');
-      await mongoose.connection.dropDatabase();
-    }
+    console.log('🧹 Clearing existing database collections...');
+    await mongoose.connection.dropDatabase();
 
     const hashedPwd = await bcrypt.hash('Demo@1234', 12);
 
@@ -46,7 +39,7 @@ const runSeeder = async () => {
       email: 'superadmin@campusflow.demo',
       password: hashedPwd,
       role: 'SUPER_ADMIN',
-      phone: '+1 (555) 000-0001',
+      phone: '+91 98765 00001',
       isActive: true,
       isEmailVerified: true
     });
@@ -54,9 +47,9 @@ const runSeeder = async () => {
     const inst1 = await Institution.create({
       name: 'Sunrise University of Technology',
       code: 'SUN01',
-      address: '742 Evergreen Academic Way, Metro City',
-      phone: '+1 (555) 010-0100',
-      email: 'contact@sunrise.edu',
+      address: '742 Academic Hills, Knowledge Corridor, Hyderabad',
+      phone: '+91 40 2345 6789',
+      email: 'contact@sunrise.edu.in',
       website: 'https://sunrise.campusflow.demo',
       type: 'UNIVERSITY',
       establishedYear: 1985,
@@ -64,21 +57,8 @@ const runSeeder = async () => {
       adminUser: superAdmin._id
     });
 
-    const inst2 = await Institution.create({
-      name: 'Apex Institute of Engineering',
-      code: 'APEX02',
-      address: '100 Silicon Boulevard, Tech Valley',
-      phone: '+1 (555) 020-0200',
-      email: 'admissions@apex.edu',
-      website: 'https://apex.campusflow.demo',
-      type: 'COLLEGE',
-      establishedYear: 2002,
-      isActive: true,
-      adminUser: superAdmin._id
-    });
-
     // ==========================================
-    // 2. COLLEGE ADMINS
+    // 2. COLLEGE ADMIN
     // ==========================================
     const admin1 = await User.create({
       firstName: 'Eleanor',
@@ -87,26 +67,16 @@ const runSeeder = async () => {
       password: hashedPwd,
       role: 'COLLEGE_ADMIN',
       institution: inst1._id,
-      phone: '+1 (555) 010-0101',
+      phone: '+91 98765 01001',
       isActive: true,
       isEmailVerified: true
-    });
-
-    const admin2 = await User.create({
-      firstName: 'Marcus',
-      lastName: 'Holloway',
-      email: 'admin2@campusflow.demo',
-      password: hashedPwd,
-      role: 'COLLEGE_ADMIN',
-      institution: inst2._id,
-      isActive: true
     });
 
     // ==========================================
     // 3. DEPARTMENTS
     // ==========================================
     const cseDept = await Department.create({
-      name: 'Computer Science and Engineering',
+      name: 'Computer Science & Engineering',
       code: 'CSE',
       institution: inst1._id,
       description: 'Department of Computer Science & Software Engineering',
@@ -114,24 +84,33 @@ const runSeeder = async () => {
     });
 
     const eceDept = await Department.create({
-      name: 'Electronics and Communication',
+      name: 'Electronics & Communication',
       code: 'ECE',
       institution: inst1._id,
       description: 'Department of Microelectronics, VLSI & Communications',
       isActive: true
     });
 
-    const mbaDept = await Department.create({
-      name: 'School of Management Studies',
-      code: 'MBA',
+    const eeeDept = await Department.create({
+      name: 'Electrical & Electronics',
+      code: 'EEE',
       institution: inst1._id,
-      description: 'Business administration, analytics and finance',
+      description: 'Department of Power Systems & Electrical Machines',
+      isActive: true
+    });
+
+    const mechDept = await Department.create({
+      name: 'Mechanical Engineering',
+      code: 'MECH',
+      institution: inst1._id,
+      description: 'Department of Robotics & Thermal Engineering',
       isActive: true
     });
 
     // ==========================================
-    // 4. FACULTY MEMBERS
+    // 4. FACULTY MEMBERS ACROSS DEPARTMENTS
     // ==========================================
+    // CSE Faculty
     const faculty1 = await User.create({
       firstName: 'Dr. Robert',
       lastName: 'Chen',
@@ -141,7 +120,7 @@ const runSeeder = async () => {
       institution: inst1._id,
       department: cseDept._id,
       employeeId: 'FAC-CSE-001',
-      phone: '+1 (555) 010-0201',
+      phone: '+91 98765 02001',
       skills: ['Database Systems', 'Distributed Computing', 'SQL'],
       isActive: true
     });
@@ -168,17 +147,25 @@ const runSeeder = async () => {
       institution: inst1._id,
       department: cseDept._id,
       employeeId: 'FAC-CSE-003',
-      skills: ['Operating Systems', 'Cloud Architecture', 'Linux'],
+      skills: ['Operating Systems', 'Computer Networks', 'Linux'],
       isActive: true
     });
 
-    // Update Head of Department
-    cseDept.head = faculty1._id;
-    await cseDept.save();
+    // ECE Faculty
+    const facultyEce = await User.create({
+      firstName: 'Dr. Ananya',
+      lastName: 'Sharma',
+      email: 'ananya.sharma@campusflow.demo',
+      password: hashedPwd,
+      role: 'FACULTY',
+      institution: inst1._id,
+      department: eceDept._id,
+      employeeId: 'FAC-ECE-001',
+      skills: ['Digital Electronics', 'Microprocessors'],
+      isActive: true
+    });
 
-    // ==========================================
-    // 5. PLACEMENT OFFICER
-    // ==========================================
+    // Placement Officer
     const placementOfficer = await User.create({
       firstName: 'Samantha',
       lastName: 'Reed',
@@ -187,26 +174,37 @@ const runSeeder = async () => {
       role: 'PLACEMENT_OFFICER',
       institution: inst1._id,
       employeeId: 'TPO-001',
-      phone: '+1 (555) 010-0301',
+      phone: '+91 98765 03001',
       isActive: true
     });
 
     // ==========================================
-    // 6. COURSES & SUBJECTS
+    // 5. COURSES & SUBJECTS
     // ==========================================
     const btechCse = await Course.create({
-      name: 'B.Tech in Computer Science and Engineering',
+      name: 'B.Tech Computer Science and Engineering',
       code: 'BTECH-CSE',
       department: cseDept._id,
       institution: inst1._id,
-      semester: 3,
+      semester: 1,
       year: 2,
       credits: 24,
-      description: '4-Year Undergraduate Program in Computer Science',
       isActive: true
     });
 
-    const subjectDbms = await Subject.create({
+    const btechEce = await Course.create({
+      name: 'B.Tech Electronics and Communication',
+      code: 'BTECH-ECE',
+      department: eceDept._id,
+      institution: inst1._id,
+      semester: 1,
+      year: 2,
+      credits: 24,
+      isActive: true
+    });
+
+    // CSE Subjects (Year 2, Semester 1)
+    const subDbms = await Subject.create({
       name: 'Database Management Systems',
       code: 'CS201',
       course: btechCse._id,
@@ -218,7 +216,7 @@ const runSeeder = async () => {
       maxExternalMarks: 70
     });
 
-    const subjectDs = await Subject.create({
+    const subDs = await Subject.create({
       name: 'Data Structures and Algorithms',
       code: 'CS202',
       course: btechCse._id,
@@ -230,7 +228,7 @@ const runSeeder = async () => {
       maxExternalMarks: 70
     });
 
-    const subjectOs = await Subject.create({
+    const subOs = await Subject.create({
       name: 'Operating Systems',
       code: 'CS203',
       course: btechCse._id,
@@ -242,468 +240,523 @@ const runSeeder = async () => {
       maxExternalMarks: 70
     });
 
-    const subjectMath = await Subject.create({
-      name: 'Discrete Mathematical Structures',
+    const subCn = await Subject.create({
+      name: 'Computer Networks',
       code: 'CS204',
       course: btechCse._id,
       department: cseDept._id,
       institution: inst1._id,
-      faculty: faculty1._id,
+      faculty: faculty3._id,
       credits: 3,
       maxInternalMarks: 30,
       maxExternalMarks: 70
     });
 
+    // ECE Subject
+    const subDe = await Subject.create({
+      name: 'Digital Electronics',
+      code: 'EC201',
+      course: btechEce._id,
+      department: eceDept._id,
+      institution: inst1._id,
+      faculty: facultyEce._id,
+      credits: 4,
+      maxInternalMarks: 30,
+      maxExternalMarks: 70
+    });
+
     // ==========================================
-    // 7. DEMO STUDENT & COHORT
+    // 6. REAL STUDENT RECORDS (REAL ROLL NUMBERS)
     // ==========================================
-    const demoStudent = await User.create({
-      firstName: 'Alex',
-      lastName: 'Morgan',
+    console.log('Creating real student records with verified university roll numbers...');
+
+    // Primary Student: Chandini Jakku (Roll: 24EG105Q39)
+    const studentChandini = await User.create({
+      firstName: 'Chandini',
+      lastName: 'Jakku',
       email: 'student@campusflow.demo',
       password: hashedPwd,
       role: 'STUDENT',
       institution: inst1._id,
       department: cseDept._id,
-      rollNumber: 'CS202601',
+      rollNumber: '24EG105Q39',
       year: 2,
-      semester: 3,
+      semester: 1,
       section: 'A',
-      phone: '+1 (555) 010-0401',
-      profileCompletion: 85,
-      skills: ['React', 'JavaScript', 'Node.js', 'Python', 'SQL', 'Git'],
-      github: 'https://github.com/alexmorgan-demo',
-      linkedin: 'https://linkedin.com/in/alexmorgan-demo',
+      phone: '+91 98765 43210',
+      profileCompletion: 90,
+      skills: ['React', 'JavaScript', 'Node.js', 'Python', 'SQL', 'MongoDB'],
       isActive: true,
       isEmailVerified: true
     });
 
-    await Enrollment.create({
-      student: demoStudent._id,
-      course: btechCse._id,
+    // Student 2 in CSE Sec A: Rahul Sharma (Roll: 24EG105Q01)
+    const studentRahul = await User.create({
+      firstName: 'Rahul',
+      lastName: 'Sharma',
+      email: 'rahul.sharma@campusflow.demo',
+      password: hashedPwd,
+      role: 'STUDENT',
       institution: inst1._id,
       department: cseDept._id,
-      academicYear: '2026-2027',
-      semester: 3,
-      isActive: true
+      rollNumber: '24EG105Q01',
+      year: 2,
+      semester: 1,
+      section: 'A',
+      phone: '+91 98765 11001',
+      isActive: true,
+      isEmailVerified: true
     });
 
-    // Create 15 fellow cohort students for realistic class listings
-    const otherStudents = [];
-    const cohortNames = [
-      ['Liam', 'Smith'], ['Emma', 'Johnson'], ['Noah', 'Williams'], ['Olivia', 'Brown'],
-      ['James', 'Jones'], ['Ava', 'Garcia'], ['William', 'Miller'], ['Sophia', 'Davis'],
-      ['Benjamin', 'Rodriguez'], ['Isabella', 'Martinez'], ['Lucas', 'Hernandez'], ['Mia', 'Lopez'],
-      ['Henry', 'Gonzalez'], ['Harper', 'Wilson'], ['Alexander', 'Anderson']
-    ];
+    // Student 3 in CSE Sec A: Priya Patel (Roll: 24EG105Q02)
+    const studentPriya = await User.create({
+      firstName: 'Priya',
+      lastName: 'Patel',
+      email: 'priya.patel@campusflow.demo',
+      password: hashedPwd,
+      role: 'STUDENT',
+      institution: inst1._id,
+      department: cseDept._id,
+      rollNumber: '24EG105Q02',
+      year: 2,
+      semester: 1,
+      section: 'A',
+      phone: '+91 98765 11002',
+      isActive: true,
+      isEmailVerified: true
+    });
 
-    for (let i = 0; i < cohortNames.length; i++) {
-      const s = await User.create({
-        firstName: cohortNames[i][0],
-        lastName: cohortNames[i][1],
-        email: `${cohortNames[i][0].toLowerCase()}.${cohortNames[i][1].toLowerCase()}@campusflow.demo`,
+    // Student 4 in CSE Sec A: Ananya Verma (Roll: 24EG105Q03 - Enrolled in OS & DSA only, NOT in DBMS)
+    const studentAnanya = await User.create({
+      firstName: 'Ananya',
+      lastName: 'Verma',
+      email: 'ananya.verma@campusflow.demo',
+      password: hashedPwd,
+      role: 'STUDENT',
+      institution: inst1._id,
+      department: cseDept._id,
+      rollNumber: '24EG105Q03',
+      year: 2,
+      semester: 1,
+      section: 'A',
+      phone: '+91 98765 11003',
+      isActive: true,
+      isEmailVerified: true
+    });
+
+    // CSE Section B Students (5 students: 24EG105Q51 - 24EG105Q55)
+    const cseBStudents = [];
+    const secBNames = [
+      ['Aditya', 'Rao'], ['Sneha', 'Reddy'], ['Vikram', 'Mehta'], ['Pooja', 'Nair'], ['Karan', 'Kapoor']
+    ];
+    for (let i = 0; i < secBNames.length; i++) {
+      const st = await User.create({
+        firstName: secBNames[i][0],
+        lastName: secBNames[i][1],
+        email: `${secBNames[i][0].toLowerCase()}.${secBNames[i][1].toLowerCase()}@campusflow.demo`,
         password: hashedPwd,
         role: 'STUDENT',
         institution: inst1._id,
         department: cseDept._id,
-        rollNumber: `CS2026${(i + 2).toString().padStart(2, '0')}`,
+        rollNumber: `24EG105Q${51 + i}`,
         year: 2,
-        semester: 3,
+        semester: 1,
+        section: 'B',
+        isActive: true,
+        isEmailVerified: true
+      });
+      cseBStudents.push(st);
+    }
+
+    // ECE Section A Students (4 students: 24EG104Q01 - 24EG104Q04)
+    const eceStudents = [];
+    const eceNames = [
+      ['Rohan', 'Gupta'], ['Meera', 'Iyer'], ['Siddharth', 'Joshi'], ['Divya', 'Menon']
+    ];
+    for (let i = 0; i < eceNames.length; i++) {
+      const st = await User.create({
+        firstName: eceNames[i][0],
+        lastName: eceNames[i][1],
+        email: `${eceNames[i][0].toLowerCase()}.${eceNames[i][1].toLowerCase()}@campusflow.demo`,
+        password: hashedPwd,
+        role: 'STUDENT',
+        institution: inst1._id,
+        department: eceDept._id,
+        rollNumber: `24EG104Q${(i + 1).toString().padStart(2, '0')}`,
+        year: 2,
+        semester: 1,
         section: 'A',
-        isActive: true
+        isActive: true,
+        isEmailVerified: true
       });
+      eceStudents.push(st);
+    }
+
+    // ==========================================
+    // 7. EXPLICIT SUBJECT-LEVEL ENROLLMENTS
+    // ==========================================
+    console.log('Enrolling students explicitly into subject cohorts...');
+
+    // A) CSE Section A — DBMS (CS201): EXACTLY 3 STUDENTS (Chandini, Rahul, Priya)
+    const dbmsSecAStudents = [studentChandini, studentRahul, studentPriya];
+    for (const st of dbmsSecAStudents) {
       await Enrollment.create({
-        student: s._id,
-        course: btechCse._id,
+        student: st._id,
         institution: inst1._id,
         department: cseDept._id,
+        course: btechCse._id,
+        year: 2,
+        semester: 1,
+        section: 'A',
+        subject: subDbms._id,
         academicYear: '2026-2027',
-        semester: 3,
+        status: 'ACTIVE',
         isActive: true
       });
-      otherStudents.push(s);
     }
 
-    const allStudents = [demoStudent, ...otherStudents];
+    // B) CSE Section A — DSA (CS202): EXACTLY 3 STUDENTS (Chandini, Rahul, Ananya)
+    const dsaSecAStudents = [studentChandini, studentRahul, studentAnanya];
+    for (const st of dsaSecAStudents) {
+      await Enrollment.create({
+        student: st._id,
+        institution: inst1._id,
+        department: cseDept._id,
+        course: btechCse._id,
+        year: 2,
+        semester: 1,
+        section: 'A',
+        subject: subDs._id,
+        academicYear: '2026-2027',
+        status: 'ACTIVE',
+        isActive: true
+      });
+    }
+
+    // C) CSE Section A — OS (CS203): EXACTLY 4 STUDENTS (Chandini, Rahul, Priya, Ananya)
+    const osSecAStudents = [studentChandini, studentRahul, studentPriya, studentAnanya];
+    for (const st of osSecAStudents) {
+      await Enrollment.create({
+        student: st._id,
+        institution: inst1._id,
+        department: cseDept._id,
+        course: btechCse._id,
+        year: 2,
+        semester: 1,
+        section: 'A',
+        subject: subOs._id,
+        academicYear: '2026-2027',
+        status: 'ACTIVE',
+        isActive: true
+      });
+    }
+
+    // D) CSE Section B — DBMS (CS201): EXACTLY 5 STUDENTS (Aditya, Sneha, Vikram, Pooja, Karan)
+    for (const st of cseBStudents) {
+      await Enrollment.create({
+        student: st._id,
+        institution: inst1._id,
+        department: cseDept._id,
+        course: btechCse._id,
+        year: 2,
+        semester: 1,
+        section: 'B',
+        subject: subDbms._id,
+        academicYear: '2026-2027',
+        status: 'ACTIVE',
+        isActive: true
+      });
+    }
+
+    // E) ECE Section A — Digital Electronics (EC201): EXACTLY 4 STUDENTS
+    for (const st of eceStudents) {
+      await Enrollment.create({
+        student: st._id,
+        institution: inst1._id,
+        department: eceDept._id,
+        course: btechEce._id,
+        year: 2,
+        semester: 1,
+        section: 'A',
+        subject: subDe._id,
+        academicYear: '2026-2027',
+        status: 'ACTIVE',
+        isActive: true
+      });
+    }
 
     // ==========================================
-    // 8. ATTENDANCE SESSIONS & RECORDS
+    // 8. WEEKLY TIMETABLES (MON - SAT)
     // ==========================================
-    // Create 20 historical sessions for DBMS (Alex has 12 Present, 8 Absent = 60% attendance -> AT RISK!)
+    console.log('Building weekly timetable matrix across Mon-Sat...');
+
+    const timetableDefs = [
+      // MONDAY
+      { day: 1, start: '09:00', end: '10:00', sub: subDbms, fac: faculty1, room: 'CSE-201', sec: 'A', crs: btechCse, dept: cseDept },
+      { day: 1, start: '10:00', end: '11:00', sub: subOs, fac: faculty3, room: 'CSE-201', sec: 'A', crs: btechCse, dept: cseDept },
+      { day: 1, start: '11:15', end: '12:15', sub: subDs, fac: faculty2, room: 'CSE-201', sec: 'A', crs: btechCse, dept: cseDept },
+      { day: 1, start: '10:00', end: '11:00', sub: subDbms, fac: faculty1, room: 'CSE-202', sec: 'B', crs: btechCse, dept: cseDept },
+
+      // TUESDAY
+      { day: 2, start: '09:00', end: '10:00', sub: subOs, fac: faculty3, room: 'CSE-201', sec: 'A', crs: btechCse, dept: cseDept },
+      { day: 2, start: '10:00', end: '11:00', sub: subDbms, fac: faculty1, room: 'CSE-201', sec: 'A', crs: btechCse, dept: cseDept },
+      { day: 2, start: '11:15', end: '12:15', sub: subDs, fac: faculty2, room: 'CSE-201', sec: 'A', crs: btechCse, dept: cseDept },
+      { day: 2, start: '11:15', end: '12:15', sub: subDbms, fac: faculty1, room: 'CSE-202', sec: 'B', crs: btechCse, dept: cseDept },
+
+      // WEDNESDAY
+      { day: 3, start: '09:00', end: '10:00', sub: subDbms, fac: faculty1, room: 'CSE-201', sec: 'A', crs: btechCse, dept: cseDept },
+      { day: 3, start: '10:00', end: '11:00', sub: subOs, fac: faculty3, room: 'CSE-201', sec: 'A', crs: btechCse, dept: cseDept },
+      { day: 3, start: '11:15', end: '12:15', sub: subDs, fac: faculty2, room: 'CSE-201', sec: 'A', crs: btechCse, dept: cseDept },
+      { day: 3, start: '10:00', end: '11:00', sub: subDbms, fac: faculty1, room: 'CSE-202', sec: 'B', crs: btechCse, dept: cseDept },
+
+      // THURSDAY
+      { day: 4, start: '09:00', end: '10:00', sub: subDbms, fac: faculty1, room: 'CSE-201', sec: 'A', crs: btechCse, dept: cseDept },
+      { day: 4, start: '10:00', end: '11:00', sub: subDs, fac: faculty2, room: 'CSE-201', sec: 'A', crs: btechCse, dept: cseDept },
+      { day: 4, start: '11:15', end: '12:15', sub: subOs, fac: faculty3, room: 'CSE-201', sec: 'A', crs: btechCse, dept: cseDept },
+      { day: 4, start: '09:00', end: '10:00', sub: subDbms, fac: faculty1, room: 'CSE-202', sec: 'B', crs: btechCse, dept: cseDept },
+
+      // FRIDAY
+      { day: 5, start: '09:00', end: '10:00', sub: subDs, fac: faculty2, room: 'CSE-201', sec: 'A', crs: btechCse, dept: cseDept },
+      { day: 5, start: '10:00', end: '11:00', sub: subOs, fac: faculty3, room: 'CSE-201', sec: 'A', crs: btechCse, dept: cseDept },
+      { day: 5, start: '11:15', end: '12:15', sub: subDbms, fac: faculty1, room: 'CSE-201', sec: 'A', crs: btechCse, dept: cseDept },
+      { day: 5, start: '10:00', end: '11:00', sub: subDbms, fac: faculty1, room: 'CSE-202', sec: 'B', crs: btechCse, dept: cseDept },
+
+      // SATURDAY
+      { day: 6, start: '09:00', end: '10:00', sub: subDbms, fac: faculty1, room: 'CSE-201', sec: 'A', crs: btechCse, dept: cseDept },
+      { day: 6, start: '10:00', end: '11:00', sub: subDs, fac: faculty2, room: 'CSE-201', sec: 'A', crs: btechCse, dept: cseDept },
+      { day: 6, start: '10:00', end: '11:00', sub: subDbms, fac: faculty1, room: 'CSE-202', sec: 'B', crs: btechCse, dept: cseDept },
+
+      // SUNDAY / SPECIAL
+      { day: 0, start: '10:00', end: '11:00', sub: subDbms, fac: faculty1, room: 'CSE-201', sec: 'A', crs: btechCse, dept: cseDept }
+    ];
+
+    for (const def of timetableDefs) {
+      await Timetable.create({
+        institution: inst1._id,
+        department: def.dept._id,
+        course: def.crs._id,
+        year: 2,
+        semester: 1,
+        section: def.sec,
+        subject: def.sub._id,
+        faculty: def.fac._id,
+        room: def.room,
+        dayOfWeek: def.day,
+        startTime: def.start,
+        endTime: def.end,
+        academicYear: '2026-2027',
+        isActive: true
+      });
+    }
+
+    // ==========================================
+    // 9. HISTORICAL ATTENDANCE SESSIONS & RECORDS
+    // ==========================================
+    console.log('Generating historical attendance records for the 3 registered DBMS students...');
+
+    // 20 past DBMS classes for Section A (Only 3 students enrolled!)
     for (let i = 1; i <= 20; i++) {
-      const date = new Date(Date.now() - (21 - i) * 24 * 60 * 60 * 1000);
-      const session = await Attendance.create({
-        subject: subjectDbms._id,
+      const sessionDate = new Date(Date.now() - (22 - i) * 86400000);
+      sessionDate.setHours(0, 0, 0, 0);
+
+      const session = await ClassSession.create({
+        institution: inst1._id,
+        department: cseDept._id,
+        course: btechCse._id,
+        year: 2,
+        semester: 1,
+        section: 'A',
+        subject: subDbms._id,
         faculty: faculty1._id,
-        institution: inst1._id,
-        department: cseDept._id,
-        date,
-        sessionType: i % 4 === 0 ? 'LAB' : 'LECTURE',
-        topic: `DBMS Unit ${Math.ceil(i / 4)}: Lecture ${i}`,
-        isFinalized: true
+        academicYear: '2026-2027',
+        date: sessionDate,
+        startTime: '09:00',
+        endTime: '10:00',
+        room: 'CSE-201',
+        topic: `DBMS Unit Lecture ${i}`,
+        status: 'COMPLETED',
+        isFinalized: true,
+        totalStudents: 3,
+        presentCount: 2,
+        absentCount: 1
       });
 
-      // Alex is absent on 8 of these sessions (60% attendance)
-      const alexStatus = [2, 5, 8, 11, 14, 16, 18, 20].includes(i) ? 'ABSENT' : 'PRESENT';
+      // Chandini attended 17 out of 20 = 85%
+      const chandiniStatus = [4, 11, 18].includes(i) ? 'ABSENT' : 'PRESENT';
+      // Rahul attended 18 out of 20 = 90%
+      const rahulStatus = [7, 15].includes(i) ? 'ABSENT' : 'PRESENT';
+      // Priya attended 12 out of 20 = 60% (At Risk < 75%)
+      const priyaStatus = [2, 5, 8, 10, 13, 16, 19, 20].includes(i) ? 'ABSENT' : 'PRESENT';
 
-      const records = allStudents.map((st) => ({
-        attendance: session._id,
-        student: st._id,
-        status: st._id.equals(demoStudent._id) ? alexStatus : (Math.random() > 0.15 ? 'PRESENT' : 'ABSENT'),
-        institution: inst1._id
-      }));
-
-      await AttendanceRecord.insertMany(records);
-    }
-
-    // Create 20 historical sessions for Data Structures (Alex has 17 Present, 3 Absent = 85% attendance -> HEALTHY)
-    for (let i = 1; i <= 20; i++) {
-      const date = new Date(Date.now() - (21 - i) * 24 * 60 * 60 * 1000);
-      const session = await Attendance.create({
-        subject: subjectDs._id,
-        faculty: faculty2._id,
-        institution: inst1._id,
-        department: cseDept._id,
-        date,
-        sessionType: 'LECTURE',
-        topic: `DSA Topic: Trees & Dynamic Programming Part ${i}`,
-        isFinalized: true
-      });
-
-      const alexStatus = [4, 9, 15].includes(i) ? 'ABSENT' : 'PRESENT';
-
-      const records = allStudents.map((st) => ({
-        attendance: session._id,
-        student: st._id,
-        status: st._id.equals(demoStudent._id) ? alexStatus : 'PRESENT',
-        institution: inst1._id
-      }));
-
-      await AttendanceRecord.insertMany(records);
+      await AttendanceRecord.create([
+        {
+          classSession: session._id,
+          student: studentChandini._id,
+          subject: subDbms._id,
+          department: cseDept._id,
+          course: btechCse._id,
+          section: 'A',
+          faculty: faculty1._id,
+          institution: inst1._id,
+          date: sessionDate,
+          status: chandiniStatus
+        },
+        {
+          classSession: session._id,
+          student: studentRahul._id,
+          subject: subDbms._id,
+          department: cseDept._id,
+          course: btechCse._id,
+          section: 'A',
+          faculty: faculty1._id,
+          institution: inst1._id,
+          date: sessionDate,
+          status: rahulStatus
+        },
+        {
+          classSession: session._id,
+          student: studentPriya._id,
+          subject: subDbms._id,
+          department: cseDept._id,
+          course: btechCse._id,
+          section: 'A',
+          faculty: faculty1._id,
+          institution: inst1._id,
+          date: sessionDate,
+          status: priyaStatus
+        }
+      ]);
     }
 
     // ==========================================
-    // 9. ASSIGNMENTS & SUBMISSIONS
+    // 10. TODAY'S CLASS SESSIONS
     // ==========================================
-    const assign1 = await Assignment.create({
-      title: 'ER-Modeling & Relational Schema Normalization (3NF/BCNF)',
-      description: 'Design an end-to-end normalized relational schema for a multi-tenant hospital management system. Submit ER diagram and SQL schema definitions.',
-      subject: subjectDbms._id,
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const todayDayOfWeek = today.getDay();
+
+    console.log(`Setting up live class sessions for Today (Day ${todayDayOfWeek})...`);
+    const todayEntries = await Timetable.find({ dayOfWeek: todayDayOfWeek });
+    for (const entry of todayEntries) {
+      const studentCount = await Enrollment.countDocuments({
+        institution: entry.institution,
+        subject: entry.subject,
+        section: entry.section,
+        status: 'ACTIVE',
+        isActive: true
+      });
+
+      await ClassSession.create({
+        institution: entry.institution,
+        department: entry.department,
+        course: entry.course,
+        year: entry.year,
+        semester: entry.semester,
+        section: entry.section,
+        subject: entry.subject,
+        faculty: entry.faculty,
+        timetable: entry._id,
+        academicYear: entry.academicYear,
+        date: today,
+        startTime: entry.startTime,
+        endTime: entry.endTime,
+        room: entry.room,
+        status: 'SCHEDULED',
+        totalStudents: studentCount
+      });
+    }
+
+    // ==========================================
+    // 11. ASSIGNMENTS & SUBMISSIONS (SECTION-SCOPED)
+    // ==========================================
+    console.log('Creating Section-Scoped Assignments...');
+
+    // Assignment 1: DBMS for CSE 2nd Year Section A ONLY (Only Chandini, Rahul, Priya can see it!)
+    const assignDbms = await Assignment.create({
+      title: 'DBMS Normalization & BCNF Decomposition Assignment',
+      description: 'Design a normalized relational schema for a healthcare clinic. Provide functional dependency sets and 3NF/BCNF decomposition proofs.',
+      instructions: 'Submit your solution in PDF or SQL format with sample table schemas.',
+      subject: subDbms._id,
       course: btechCse._id,
+      department: cseDept._id,
+      year: 2,
+      semester: 1,
+      section: 'A',
       faculty: faculty1._id,
       institution: inst1._id,
-      department: cseDept._id,
-      deadline: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000), // Past deadline
-      maxMarks: 50,
-      allowedFileTypes: ['pdf', 'sql'],
+      deadline: new Date(Date.now() + 7 * 86400000),
+      maxMarks: 20,
+      allowedFileTypes: ['pdf', 'sql', 'docx'],
       status: 'ACTIVE'
     });
 
-    const assign2 = await Assignment.create({
-      title: 'AVL Tree & Red-Black Tree Implementation in C++',
-      description: 'Implement self-balancing binary search trees with insertion, deletion and rotation operations. Include unit test cases.',
-      subject: subjectDs._id,
+    // Assignment 2: DSA for CSE 2nd Year Section A ONLY
+    const assignDsa = await Assignment.create({
+      title: 'DSA: Binary Search Tree & AVL Rotation Implementations',
+      description: 'Implement AVL self-balancing tree rotations in C++ or Python with insert, delete and search operations.',
+      instructions: 'Upload your source code (.cpp / .py) or a zip archive.',
+      subject: subDs._id,
       course: btechCse._id,
+      department: cseDept._id,
+      year: 2,
+      semester: 1,
+      section: 'A',
       faculty: faculty2._id,
       institution: inst1._id,
-      department: cseDept._id,
-      deadline: new Date(Date.now() + 4 * 24 * 60 * 60 * 1000), // Upcoming deadline
-      maxMarks: 50,
-      allowedFileTypes: ['cpp', 'pdf', 'zip'],
+      deadline: new Date(Date.now() + 10 * 86400000),
+      maxMarks: 30,
+      allowedFileTypes: ['cpp', 'py', 'zip', 'pdf'],
       status: 'ACTIVE'
     });
 
-    const assign3 = await Assignment.create({
-      title: 'Multithreading & IPC Synchronization in Linux',
-      description: 'Solve the Producer-Consumer problem using POSIX semaphores and mutex locks with shared memory.',
-      subject: subjectOs._id,
-      course: btechCse._id,
-      faculty: faculty3._id,
-      institution: inst1._id,
-      department: cseDept._id,
-      deadline: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000),
-      maxMarks: 40,
-      status: 'ACTIVE'
-    });
-
-    // Submissions for Alex
+    // Chandini has submitted Assignment 1
     await AssignmentSubmission.create({
-      assignment: assign1._id,
-      student: demoStudent._id,
+      assignment: assignDbms._id,
+      student: studentChandini._id,
       institution: inst1._id,
-      files: [{ filename: 'AlexMorgan_DBMS_Assignment1.pdf', url: '/uploads/demo/dbms1.pdf', mimetype: 'application/pdf' }],
-      submittedAt: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000),
+      files: [{ filename: 'Chandini_24EG105Q39_DBMS_Assignment.pdf', url: '/uploads/demo/dbms1.pdf', mimetype: 'application/pdf' }],
+      submittedAt: new Date(Date.now() - 1 * 86400000),
       status: 'GRADED',
-      marks: 38,
-      feedback: 'Good schema design overall. Weak on BCNF decomposition examples. Review anomalies in 3NF.',
+      marks: 19,
+      feedback: 'Excellent normalization proofs and clean schema design.',
       gradedBy: faculty1._id,
-      gradedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000)
+      gradedAt: new Date()
     });
 
-    // ==========================================
-    // 10. GRADES & ACADEMIC RECORDS
-    // ==========================================
-    // Semester 1 Record
-    await Grade.create({
-      student: demoStudent._id,
-      subject: subjectDbms._id,
-      course: btechCse._id,
+    // Rahul has submitted Assignment 1
+    await AssignmentSubmission.create({
+      assignment: assignDbms._id,
+      student: studentRahul._id,
       institution: inst1._id,
-      department: cseDept._id,
-      semester: 1,
-      academicYear: '2025-2026',
-      totalInternal: 24,
-      totalExternal: 56,
-      total: 80,
-      grade: 'A+',
-      gradePoints: 9,
-      isFinalized: true
+      files: [{ filename: 'Rahul_24EG105Q01_DBMS.pdf', url: '/uploads/demo/dbms_rahul.pdf', mimetype: 'application/pdf' }],
+      submittedAt: new Date(Date.now() - 2 * 86400000),
+      status: 'SUBMITTED',
+      marks: null
     });
 
-    // Semester 2 Record
-    await Grade.create({
-      student: demoStudent._id,
-      subject: subjectDs._id,
-      course: btechCse._id,
-      institution: inst1._id,
-      department: cseDept._id,
-      semester: 2,
-      academicYear: '2025-2026',
-      totalInternal: 22,
-      totalExternal: 51,
-      total: 73,
-      grade: 'A',
-      gradePoints: 8,
-      isFinalized: true
-    });
+    // Priya's submission is pending
 
-    await AcademicRecord.create({
-      student: demoStudent._id,
-      institution: inst1._id,
-      semester: 1,
-      academicYear: '2025-2026',
-      sgpa: 8.5,
-      cgpa: 8.5,
-      totalCredits: 20,
-      earnedCredits: 20
-    });
-
-    await AcademicRecord.create({
-      student: demoStudent._id,
-      institution: inst1._id,
-      semester: 2,
-      academicYear: '2025-2026',
-      sgpa: 7.8,
-      cgpa: 8.15,
-      totalCredits: 22,
-      earnedCredits: 22
-    });
-
-    // ==========================================
-    // 11. COMPANIES & JOB DRIVES
-    // ==========================================
-    const google = await Company.create({
-      name: 'Google LLC',
-      industry: 'Software & Cloud Computing',
-      website: 'https://careers.google.com',
-      location: 'Mountain View, CA / Hyderabad',
-      description: 'Global technology leader specializing in internet-related services, cloud, and AI.',
-      minPackage: 18,
-      maxPackage: 32,
-      jobRoles: ['Software Development Engineer', 'Cloud Systems Engineer'],
-      requiredSkills: ['Data Structures', 'Algorithms', 'C++', 'Java', 'Distributed Systems'],
-      institution: inst1._id,
-      isActive: true
-    });
-
-    const amazon = await Company.create({
-      name: 'Amazon Web Services',
-      industry: 'E-Commerce & Cloud Infrastructure',
-      website: 'https://amazon.jobs',
-      location: 'Seattle, WA / Bangalore',
-      description: 'World leading cloud platform offering scalable compute, storage, and database solutions.',
-      minPackage: 15,
-      maxPackage: 28,
-      jobRoles: ['SDE-1', 'Systems Development Engineer'],
-      requiredSkills: ['Java', 'Object Oriented Programming', 'AWS', 'SQL'],
-      institution: inst1._id,
-      isActive: true
-    });
-
-    const microsoft = await Company.create({
-      name: 'Microsoft Corporation',
-      industry: 'Software, Hardware & AI',
-      website: 'https://careers.microsoft.com',
-      location: 'Redmond, WA / Noida',
-      minPackage: 16,
-      maxPackage: 30,
-      jobRoles: ['Software Engineer', 'Full Stack Developer'],
-      requiredSkills: ['React', 'TypeScript', 'Node.js', 'C#', 'Azure'],
-      institution: inst1._id,
-      isActive: true
-    });
-
-    // Job Drive 1: Google (Requires CGPA >= 8.0, Attendance >= 75%)
-    const googleDrive = await JobDrive.create({
-      company: google._id,
-      institution: inst1._id,
-      role: 'Associate Software Engineer (2026 Batch)',
-      description: 'Looking for high-caliber problem solvers with strong algorithm intuition and system modeling fundamentals.',
-      location: 'Hyderabad / Bangalore',
-      package: 24,
-      eligibility: {
-        minCGPA: 8.0,
-        minAttendance: 75,
-        maxBacklogs: 0,
-        departments: [cseDept._id, eceDept._id],
-        graduationYear: 2026
-      },
-      requiredSkills: ['Data Structures', 'Algorithms', 'C++', 'System Design'],
-      applicationDeadline: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000),
-      status: 'ACTIVE',
-      placementOfficer: placementOfficer._id
-    });
-
-    // Job Drive 2: Microsoft (Requires CGPA >= 7.5, Attendance >= 70%)
-    const msftDrive = await JobDrive.create({
-      company: microsoft._id,
-      institution: inst1._id,
-      role: 'Full Stack Web Developer (React + Node)',
-      description: 'Build mission critical web services and modern interactive experiences for enterprise customers.',
-      location: 'Noida / Hyderabad',
-      package: 18,
-      eligibility: {
-        minCGPA: 7.5,
-        minAttendance: 70,
-        maxBacklogs: 0,
-        departments: [cseDept._id],
-        graduationYear: 2026
-      },
-      requiredSkills: ['React', 'Node.js', 'JavaScript', 'MongoDB', 'REST APIs'],
-      applicationDeadline: new Date(Date.now() + 20 * 24 * 60 * 60 * 1000),
-      status: 'ACTIVE',
-      placementOfficer: placementOfficer._id
-    });
-
-    // Alex applied to Microsoft Drive
-    await JobApplication.create({
-      drive: msftDrive._id,
-      student: demoStudent._id,
-      institution: inst1._id,
-      status: 'SHORTLISTED',
-      appliedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000)
-    });
-
-    // Record one past offer for platform metrics
-    await PlacementOutcome.create({
-      student: otherStudents[0]._id,
-      company: amazon._id,
-      drive: msftDrive._id,
-      institution: inst1._id,
-      role: 'SDE-1',
-      package: 22,
-      joiningDate: new Date('2026-07-01'),
-      status: 'OFFERED'
-    });
-
-    // ==========================================
-    // 12. EVENTS & ANNOUNCEMENTS
-    // ==========================================
-    await Event.create({
-      title: 'National Hackathon 2026: AI & Smart Campus Innovations',
-      description: '36-hour flagship hackathon bringing together top collegiate developers to build next-gen smart campus tools.',
-      institution: inst1._id,
-      department: cseDept._id,
-      eventType: 'HACKATHON',
-      date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-      startTime: '09:00 AM',
-      endTime: '09:00 PM',
-      venue: 'Main Auditorium & Innovation Lab',
-      organizer: faculty1._id,
-      capacity: 150,
-      audience: 'ALL',
-      isActive: true
-    });
-
-    await Announcement.create({
-      title: 'Mid-Semester Examination Schedule & Rules Released',
-      content: 'The Mid-Semester exams for B.Tech Semester 3 will commence on the 15th of next month. Ensure minimum 75% attendance for hall ticket issuance.',
-      institution: inst1._id,
-      department: cseDept._id,
-      createdBy: admin1._id,
-      audience: 'STUDENTS',
-      priority: 'URGENT',
-      isActive: true
-    });
-
-    await Announcement.create({
-      title: 'Google & Microsoft Campus Placement Drive Registration Open',
-      content: 'Eligible 2026 batch students from CSE & ECE can now apply directly via the Placement portal. Check your eligibility criteria before submitting.',
-      institution: inst1._id,
-      createdBy: placementOfficer._id,
-      audience: 'STUDENTS',
-      priority: 'IMPORTANT',
-      isActive: true
-    });
-
-    // ==========================================
-    // 13. STUDENT REQUESTS & NOTIFICATIONS
-    // ==========================================
-    await StudentRequest.create({
-      student: demoStudent._id,
-      institution: inst1._id,
-      department: cseDept._id,
-      type: 'BONAFIDE',
-      subject: 'Bonafide Certificate for National Hackathon Travel Grant',
-      description: 'Requesting a formal institutional bonafide letter to submit for travel grant sponsorship to attend the National Collegiate Hackathon.',
-      status: 'APPROVED',
-      resolvedBy: admin1._id,
-      resolvedAt: new Date(),
-      workflow: [
-        { action: 'SUBMITTED', performedBy: demoStudent._id, comment: 'Application submitted with event brochure', timestamp: new Date(Date.now() - 48 * 3600000) },
-        { action: 'APPROVE', performedBy: admin1._id, comment: 'Approved. Certificate generated.', timestamp: new Date(Date.now() - 12 * 3600000) }
-      ]
-    });
-
-    // Trigger important notifications for Alex
+    // Notification for Chandini
     await Notification.create({
-      user: demoStudent._id,
-      institution: inst1._id,
-      type: 'ATTENDANCE_WARNING',
-      title: '⚠️ Attendance Warning: Database Management Systems',
-      message: 'Your attendance in CS201 (DBMS) is currently 60% (12/20 classes). You need 12 consecutive classes to reach the 75% required threshold.',
-      link: '/student/attendance',
-      isRead: false
-    });
-
-    await Notification.create({
-      user: demoStudent._id,
-      institution: inst1._id,
-      type: 'APPLICATION_UPDATE',
-      title: '🎉 Application Shortlisted: Microsoft',
-      message: 'You have been shortlisted for Round 1 Technical Interview for Full Stack Web Developer role at Microsoft.',
-      link: '/student/placements',
-      isRead: false
-    });
-
-    await Notification.create({
-      user: demoStudent._id,
+      user: studentChandini._id,
       institution: inst1._id,
       type: 'ASSIGNMENT_GRADED',
-      title: 'Assignment Graded: ER-Modeling',
-      message: 'Dr. Robert Chen has graded your submission. Marks: 38/50. View feedback in the assignment tab.',
+      title: 'Assignment Graded: Database Management Systems',
+      message: 'Your submission for "DBMS Normalization & BCNF Decomposition" has been evaluated. Score: 19/20 marks.',
       link: '/student/assignments',
-      isRead: true
+      isRead: false
     });
 
-    console.log('✨ Seed database populated with realistic multi-tenant data!');
+    console.log('✨ Seed database loaded with 100% Real Database Relationships & Roll Numbers!');
     console.log('===========================================================');
-    console.log('🔑 DEMO CREDENTIALS (Password for all: Demo@1234):');
-    console.log('1. Super Admin:      superadmin@campusflow.demo');
-    console.log('2. College Admin:    admin@campusflow.demo');
-    console.log('3. Faculty (CSE):    faculty@campusflow.demo');
-    console.log('4. Placement Officer: placement@campusflow.demo');
-    console.log('5. Student (Alex):   student@campusflow.demo');
+    console.log('🔑 REAL CREDENTIALS (Password: Demo@1234):');
+    console.log('1. Student (Chandini):  24EG105Q39  OR  student@campusflow.demo');
+    console.log('2. Student (Rahul):     24EG105Q01  OR  rahul.sharma@campusflow.demo');
+    console.log('3. Student (Priya):     24EG105Q02  OR  priya.patel@campusflow.demo');
+    console.log('4. Faculty (Dr. Chen):  faculty@campusflow.demo');
+    console.log('5. College Admin:       admin@campusflow.demo');
+    console.log('6. Placement Officer:   placement@campusflow.demo');
+    console.log('7. Super Admin:         superadmin@campusflow.demo');
     console.log('===========================================================');
 
     process.exit(0);

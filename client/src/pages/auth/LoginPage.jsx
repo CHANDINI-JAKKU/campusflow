@@ -8,7 +8,7 @@ import { Loader2, Sparkles } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const schema = z.object({
-  email: z.string().email('Please enter a valid email address'),
+  identifier: z.string().min(1, 'Please enter your Roll Number or Email address'),
   password: z.string().min(1, 'Password is required'),
 });
 
@@ -20,7 +20,7 @@ export default function LoginPage() {
   const { register, handleSubmit, formState: { errors } } = useForm({
     resolver: zodResolver(schema),
     defaultValues: {
-      email: '',
+      identifier: '',
       password: ''
     }
   });
@@ -28,7 +28,7 @@ export default function LoginPage() {
   const onSubmit = async (data) => {
     setLoading(true);
     try {
-      const user = await login(data.email, data.password);
+      const user = await login(data.identifier, data.password);
       toast.success(`Welcome back, ${user.firstName}!`);
       
       const roleRoutes = {
@@ -38,9 +38,9 @@ export default function LoginPage() {
         SUPER_ADMIN: '/super-admin/dashboard',
         PLACEMENT_OFFICER: '/placement/dashboard'
       };
-      navigate(roleRoutes[user.role]);
+      navigate(roleRoutes[user.role] || '/student/dashboard');
     } catch (err) {
-      toast.error(err.message || 'Invalid email or password');
+      toast.error(err.message || 'Invalid Roll Number / Email or password');
     } finally {
       setLoading(false);
     }
@@ -81,18 +81,18 @@ export default function LoginPage() {
           <form className="space-y-5" onSubmit={handleSubmit(onSubmit)}>
             <div>
               <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
-                Email Address
+                Roll Number or Email Address
               </label>
               <div className="mt-1.5">
                 <input
-                  {...register('email')}
-                  type="email"
-                  autoComplete="email"
+                  {...register('identifier')}
+                  type="text"
+                  autoComplete="username"
                   className="appearance-none block w-full px-3.5 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl shadow-2xs focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm dark:bg-gray-700 dark:text-white"
                 />
-                {errors.email && (
+                {errors.identifier && (
                   <p className="mt-1.5 text-xs text-red-600 dark:text-red-400">
-                    {errors.email.message}
+                    {errors.identifier.message}
                   </p>
                 )}
               </div>

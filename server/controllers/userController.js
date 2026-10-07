@@ -70,19 +70,41 @@ export const getStudentProfile = asyncHandler(async (req, res) => {
 
 // POST /api/users — create user (admin)
 export const createUser = asyncHandler(async (req, res) => {
-  const { firstName, lastName, email, password, role, department, rollNumber, employeeId, phone, year, semester, section } = req.body;
+  const { firstName, lastName, email, password, role, department, course, rollNumber, employeeId, phone, year, semester, section } = req.body;
 
-  const existing = await User.findOne({ email });
-  if (existing) throw new ApiError(409, 'Email already in use');
+  const existingEmail = await User.findOne({ email });
+  if (existingEmail) throw new ApiError(409, `Email '${email}' is already registered`);
 
   const institution = req.user.role === 'SUPER_ADMIN'
-    ? req.body.institution
+    ? req.body.institution || req.user.institution
     : req.user.institution;
 
-  const hashed = await bcrypt.hash(password || 'CampusFlow@123', 12);
+  if (role === 'STUDENT') {
+    if (!rollNumber || !rollNumber.trim()) {
+      throw new ApiError(400, 'Roll Number is required for students');
+    }
+    const cleanRoll = rollNumber.trim().toUpperCase();
+    const existingRoll = await User.findOne({ rollNumber: cleanRoll, institution });
+    if (existingRoll) {
+      throw new ApiError(409, `Roll Number '${cleanRoll}' is already in use`);
+    }
+  }
+
+  const hashed = await bcrypt.hash(password || 'Demo@1234', 12);
   const user = await User.create({
-    firstName, lastName, email, password: hashed, role, institution, department,
-    rollNumber, employeeId, phone, year, semester, section,
+    firstName, 
+    lastName, 
+    email, 
+    password: hashed, 
+    role, 
+    institution, 
+    department,
+    rollNumber: rollNumber ? rollNumber.trim().toUpperCase() : undefined, 
+    employeeId: employeeId ? employeeId.trim() : undefined, 
+    phone, 
+    year: Number(year) || 1, 
+    semester: Number(semester) || 1, 
+    section: section ? section.trim().toUpperCase() : 'A',
     isEmailVerified: true,
   });
 

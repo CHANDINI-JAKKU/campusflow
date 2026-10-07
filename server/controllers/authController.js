@@ -105,18 +105,29 @@ export const register = asyncHandler(async (req, res) => {
 
 // POST /api/auth/login
 export const login = asyncHandler(async (req, res) => {
-  const { email, password } = req.body;
+  const identifier = (req.body.identifier || req.body.email || req.body.rollNumber || '').trim();
+  const { password } = req.body;
 
-  const user = await User.findOne({ email }).select('+password')
+  if (!identifier || !password) {
+    throw new ApiError(400, 'Roll Number or Email and Password are required');
+  }
+
+  // Support login via email or official roll number (e.g. 24EG105Q01, 24EG105Q39)
+  const user = await User.findOne({
+    $or: [
+      { email: { $regex: new RegExp(`^${identifier}$`, 'i') } },
+      { rollNumber: { $regex: new RegExp(`^${identifier}$`, 'i') } }
+    ]
+  }).select('+password')
     .populate('institution', 'name code isActive')
     .populate('department', 'name code');
 
-  if (!user) throw new ApiError(401, 'Invalid email or password');
+  if (!user) throw new ApiError(401, 'Invalid Roll Number / Email or Password');
   if (!user.isActive) throw new ApiError(403, 'Account deactivated. Contact administrator.');
   if (user.institution && !user.institution.isActive) throw new ApiError(403, 'Institution is inactive');
 
   const isMatch = await bcrypt.compare(password, user.password);
-  if (!isMatch) throw new ApiError(401, 'Invalid email or password');
+  if (!isMatch) throw new ApiError(401, 'Invalid Roll Number / Email or Password');
 
   const accessToken = await issueTokens(user, res);
   const userData = user.toObject();

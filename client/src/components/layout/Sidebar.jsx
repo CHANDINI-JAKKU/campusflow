@@ -21,6 +21,8 @@ const NAV_ITEMS = {
   ],
   COLLEGE_ADMIN: [
     { name: 'College Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
+    { name: 'Students Directory', href: '/admin/students', icon: Users },
+    { name: 'Subject Enrollment', href: '/admin/enrollment', icon: BookOpen },
   ],
   PLACEMENT_OFFICER: [
     { name: 'Placement Hub', href: '/placement/dashboard', icon: Briefcase },
